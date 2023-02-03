@@ -1,2 +1,2 @@
 # speaker-diarization
-Different approach for Speaker Diarization
+Approaches for Speaker Diarization
