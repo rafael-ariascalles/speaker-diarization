@@ -10,6 +10,12 @@ import librosa
 import wget
 from omegaconf import OmegaConf
 import soundfile
+#
+import json
+import io
+import boto3
+import awswrangler as wr
+#
 from nemo.collections.asr.models.msdd_models import NeuralDiarizer
 
 ROOT = os.getcwd()
@@ -31,7 +37,7 @@ meta = {
     'duration':None, 
     'label': 'infer', 
     'text': '-', 
-    'num_speakers': None, 
+    'num_speakers': 2, 
     'rttm_filepath': None, 
     'uem_filepath' : None
 }
@@ -41,10 +47,16 @@ with open('data/input_manifest.json','w') as fp:
 
 if __name__ == "__main__":
 
+    s3_path = os.getenv("INPUT_AUDIO_FILE")
+    buffer = io.BytesIO() 
+    sess = boto3.Session(aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"))
+    wr.s3.download(path=s3_path,local_file=buffer,boto3_session=sess)
+    buffer.seek(0)
+    
+    filename = s3_path.split("/")[-1].split(".")[0]
 
-    signal, sample_rate = librosa.load("vocals.wav", sr=None)
+    signal, sample_rate = librosa.load(buffer, sr=None)
     soundfile.write("mono_file.wav", signal, sample_rate, "PCM_24")
-
 
     config = OmegaConf.load(MODEL_CONFIG)
 
@@ -72,3 +84,21 @@ if __name__ == "__main__":
     system_vad_msdd_model = NeuralDiarizer(cfg=config)
     system_vad_msdd_model.diarize()
 
+    result_rttm = f"{output_dir}/pred_rttms/mono_file.rttm"
+    input_next_step = f"{output_dir}/speaker_ts.txt"
+
+    speaker_ts = []
+    with open(result_rttm, "r") as f:
+        lines = f.readlines()
+        for line in lines:
+            line_list = line.split(" ")
+            s = int(float(line_list[5]) * 1000)
+            e = s + int(float(line_list[8]) * 1000)
+            speaker_ts.append([s, e, int(line_list[11].split("_")[-1])])
+
+
+    with open(input_next_step, "w") as fp:
+        json.dump(speaker_ts, fp)
+
+    wr.s3.upload(local_file=result_rttm, path="{}/{}.rttm".format(os.getenv("OUTPUT_BUCKET"),filename))    
+    wr.s3.upload(local_file=input_next_step, path="{}/{}_speaker.txt".format(os.getenv("OUTPUT_BUCKET"),filename))

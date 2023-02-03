@@ -45,3 +45,5 @@ transformers>=4.0.1
 wandb
 webdataset>=0.1.48,<=0.1.62
 torchmetrics==0.10.3
+boto3
+awswrangler
