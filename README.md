@@ -6,8 +6,8 @@ Approaches for Speaker Diarization
 ```.env
 AWS_ACCESS_KEY_ID=<>
 AWS_SECRET_ACCESS_KEY=<>
-INPUT_AUDIO_FILE=s3://stak-diarization-input/audio/project_1663714_vocals.wav
-OUTPUT_BUCKET=s3://stak-diarization-output/files
+INPUT_AUDIO_FILE=<S3://PATH_TO_FILE>
+OUTPUT_BUCKET=<S3://PATH_TO_BUCKET>
 ```
 
 ## NeMo Diarization
