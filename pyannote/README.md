@@ -1,0 +1,10 @@
+create env variables
+
+```bash
+echo "AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+WHISPER_VERSION=
+S3_INPUT_AUDIO_KEY=
+S3_BUCKET=
+HUGGINGFACE_TOKEN=" >> .env
+```
